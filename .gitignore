@@ -1,0 +1,39 @@
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Kubernetes secrets
+*-secrets.yaml
+*-secret.yaml
+secrets/
+
+# Backup files
+*.tar.gz
+*.zip
+backups/
+
+# Local configuration
+.env
+.env.local
+local/
+
+# Local values - NEVER commit these
+values.local.yaml
+*-local.yaml
+.env
+.env.*
+secrets/
+private/
+config.env
+**/config.env
