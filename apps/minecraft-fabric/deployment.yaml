@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft-fabric-server
+  labels:
+    app: minecraft-fabric
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft-fabric
+  template:
+    metadata:
+      labels:
+        app: minecraft-fabric
+    spec:
+      containers:
+      - name: minecraft-fabric
+        image: itzg/minecraft-server:latest
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "6Gi"
+            cpu: "4"
+        ports:
+        - containerPort: 25565
+          name: minecraft
+        envFrom:
+        - configMapRef:
+            name: minecraft-fabric-config
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - mc-health
+          initialDelaySeconds: 120
+          periodSeconds: 60
+        readinessProbe:
+          exec:
+            command:
+            - mc-health
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: minecraft-fabric-data-pvc

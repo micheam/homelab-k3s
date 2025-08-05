@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: minecraft-fabric
+
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - pv-local.yaml
+
+configMapGenerator:
+  - name: minecraft-fabric-config
+    envs:
+      - config.env
+
+images:
+  - name: itzg/minecraft-server
+    newTag: latest

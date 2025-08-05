@@ -43,6 +43,17 @@ if [ ! -f apps/minecraft/pv-local.yaml ]; then
     echo "✏️  Please edit apps/minecraft/pv-local.yaml"
 fi
 
+# Minecraft Fabric config
+if [ ! -f apps/minecraft-fabric/config.env ]; then
+    cp apps/minecraft-fabric/config.env.example apps/minecraft-fabric/config.env
+    echo "✏️  Please edit apps/minecraft-fabric/config.env"
+fi
+
+if [ ! -f apps/minecraft-fabric/pv-local.yaml ]; then
+    cp apps/minecraft-fabric/pv.yaml.example apps/minecraft-fabric/pv-local.yaml
+    echo "✏️  Please edit apps/minecraft-fabric/pv-local.yaml"
+fi
+
 echo ""
 echo "📝 Next steps:"
 echo "1. Edit the local configuration files"

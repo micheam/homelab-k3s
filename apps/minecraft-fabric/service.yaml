@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-fabric
+  labels:
+    app: minecraft-fabric
+spec:
+  type: LoadBalancer
+  selector:
+    app: minecraft-fabric
+  ports:
+    - port: 25566
+      targetPort: minecraft
+      protocol: TCP
+      name: minecraft
