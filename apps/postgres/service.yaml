@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: postgres
   labels:
-    app: limno-postgres
+    app: postgres
 spec:
   type: ClusterIP
   selector:
-    app: limno-postgres
+    app: postgres
   ports:
   - port: 5432
     targetPort: 5432

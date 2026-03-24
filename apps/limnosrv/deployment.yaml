@@ -17,11 +17,12 @@ spec:
       initContainers:
       - name: wait-for-postgres
         image: limnosrv:latest
+        imagePullPolicy: Never
         command:
         - sh
         - -c
         - |
-          until pg_isready -h postgres -U limno; do
+          until pg_isready -h postgres.postgres.svc.cluster.local -U limno; do
             echo "Waiting for postgres..."
             sleep 2
           done
@@ -30,6 +31,7 @@ spec:
             name: limnosrv-config
       - name: migrate
         image: limnosrv:latest
+        imagePullPolicy: Never
         command:
         - sh
         - -c

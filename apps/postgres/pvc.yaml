@@ -8,5 +8,5 @@ spec:
   storageClassName: local-storage
   resources:
     requests:
-      storage: 5Gi
-  volumeName: limno-postgres-data-pv
+      storage: 10Gi
+  volumeName: postgres-data-pv
