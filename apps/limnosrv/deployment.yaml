@@ -29,6 +29,8 @@ spec:
         envFrom:
         - configMapRef:
             name: limnosrv-config
+        - secretRef:
+            name: limnosrv-secrets
       - name: migrate
         image: limnosrv:latest
         imagePullPolicy: Never
@@ -41,6 +43,8 @@ spec:
         envFrom:
         - configMapRef:
             name: limnosrv-config
+        - secretRef:
+            name: limnosrv-secrets
       containers:
       - name: limnosrv
         image: limnosrv:latest
@@ -59,6 +63,8 @@ spec:
         envFrom:
         - configMapRef:
             name: limnosrv-config
+        - secretRef:
+            name: limnosrv-secrets
         livenessProbe:
           tcpSocket:
             port: 8080

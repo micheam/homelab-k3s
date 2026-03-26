@@ -30,6 +30,8 @@ spec:
         envFrom:
         - configMapRef:
             name: minecraft-fabric-config
+        - secretRef:
+            name: minecraft-fabric-secrets
         volumeMounts:
         - name: data
           mountPath: /data

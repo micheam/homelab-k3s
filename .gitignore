@@ -13,7 +13,7 @@ Thumbs.db
 .vscode/
 *.iml
 
-# Kubernetes secrets
+# Kubernetes secrets (plain YAML)
 *-secrets.yaml
 *-secret.yaml
 secrets/
@@ -23,17 +23,19 @@ secrets/
 *.zip
 backups/
 
-# Local configuration
-.env
-.env.local
+# Local node-specific configuration
+*-local.yaml
 local/
 
-# Local values - NEVER commit these
-values.local.yaml
-*-local.yaml
+# Environment files
 .env
+.env.local
 .env.*
-secrets/
+
+# Secrets (plaintext) - NEVER commit these
+secrets.env
+**/secrets.env
 private/
-config.env
-**/config.env
+
+# Local values
+values.local.yaml

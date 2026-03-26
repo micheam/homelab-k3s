@@ -5,6 +5,10 @@ set -e
 #/ Usage: init_local [-h]
 #/ Initialize local configuration files
 #/
+#/ Prerequisites:
+#/   - sops (https://github.com/getsf/sops)
+#/   - age key at ~/.config/sops/age/keys.txt
+#/
 #/ Options:
 #/   -h             show this message.
 #/
@@ -32,21 +36,32 @@ while getopts ":h" opt; do
 
 echo "Setting up local configuration files..."
 
-# Minecraft config
-if [ ! -f apps/minecraft/config.env ]; then
-    cp apps/minecraft/config.env.example apps/minecraft/config.env
-    echo "✏️  Please edit apps/minecraft/config.env"
+# Check prerequisites
+if ! command -v sops &> /dev/null; then
+    echo "ERROR: sops is not installed. Install with: brew install sops"
+    exit 1
 fi
 
+if [ ! -f "${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}" ]; then
+    echo "ERROR: age key not found at ~/.config/sops/age/keys.txt"
+    echo "Generate with: age-keygen -o ~/.config/sops/age/keys.txt"
+    exit 1
+fi
+
+# Decrypt secrets for each app
+for app_dir in apps/*/; do
+    enc_file="${app_dir}secrets.enc.env"
+    dec_file="${app_dir}secrets.env"
+    if [ -f "$enc_file" ] && [ ! -f "$dec_file" ]; then
+        sops decrypt "$enc_file" > "$dec_file"
+        echo "🔓 Decrypted ${dec_file}"
+    fi
+done
+
+# PV local configuration (node-specific)
 if [ ! -f apps/minecraft/pv-local.yaml ]; then
     cp apps/minecraft/pv.yaml.example apps/minecraft/pv-local.yaml
     echo "✏️  Please edit apps/minecraft/pv-local.yaml"
-fi
-
-# Minecraft Fabric config
-if [ ! -f apps/minecraft-fabric/config.env ]; then
-    cp apps/minecraft-fabric/config.env.example apps/minecraft-fabric/config.env
-    echo "✏️  Please edit apps/minecraft-fabric/config.env"
 fi
 
 if [ ! -f apps/minecraft-fabric/pv-local.yaml ]; then
@@ -54,9 +69,12 @@ if [ ! -f apps/minecraft-fabric/pv-local.yaml ]; then
     echo "✏️  Please edit apps/minecraft-fabric/pv-local.yaml"
 fi
 
+if [ ! -f apps/postgres/pv-local.yaml ]; then
+    cp apps/postgres/pv.yaml.example apps/postgres/pv-local.yaml
+    echo "✏️  Please edit apps/postgres/pv-local.yaml"
+fi
+
 echo ""
 echo "📝 Next steps:"
-echo "1. Edit the local configuration files"
-echo "2. Update paths and node names"
-echo "3. Set secure passwords"
-echo "4. Run: kubectl apply -k apps/minecraft/"
+echo "1. Edit pv-local.yaml files (update paths and node names)"
+echo "2. Deploy: kubectl apply -k apps/<app-name>/"

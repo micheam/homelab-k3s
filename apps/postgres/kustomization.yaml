@@ -15,6 +15,11 @@ configMapGenerator:
     envs:
       - config.env
 
+secretGenerator:
+  - name: postgres-secrets
+    envs:
+      - secrets.env
+
 images:
   - name: postgres
     newTag: 18-alpine

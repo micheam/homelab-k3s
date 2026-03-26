@@ -15,6 +15,11 @@ configMapGenerator:
     envs:
       - config.env
 
+secretGenerator:
+  - name: minecraft-secrets
+    envs:
+      - secrets.env
+
 images:
   - name: itzg/minecraft-server
     newTag: java24-graalvm

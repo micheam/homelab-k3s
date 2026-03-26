@@ -13,6 +13,11 @@ configMapGenerator:
     envs:
       - config.env
 
+secretGenerator:
+  - name: limnosrv-secrets
+    envs:
+      - secrets.env
+
 images:
   - name: limnosrv
     newTag: latest

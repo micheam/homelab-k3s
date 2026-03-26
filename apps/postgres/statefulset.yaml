@@ -31,6 +31,8 @@ spec:
         envFrom:
         - configMapRef:
             name: postgres-config
+        - secretRef:
+            name: postgres-secrets
         volumeMounts:
         - name: data
           mountPath: /var/lib/postgresql
