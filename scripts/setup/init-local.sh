@@ -77,4 +77,4 @@ fi
 echo ""
 echo "📝 Next steps:"
 echo "1. Edit pv-local.yaml files (update paths and node names)"
-echo "2. Deploy: kubectl apply -k apps/<app-name>/"
+echo "2. Deploy: kubectl kustomize apps/<app-name>/ | ssh <k3s-node> 'KUBECONFIG=\$HOME/.kube/config kubectl apply -f -'"

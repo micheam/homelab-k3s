@@ -30,6 +30,10 @@ die()   { echo "ERROR: $*" >&2; exit 1; }
 
 ssh_node() { ssh -t "${K3S_USER}@${K3S_NODE}" "$@"; }
 
+# ローカルの kubeconfig は読み取り専用のため、書込みを伴う kubectl はノード上で実行する。
+# k3s 同梱の kubectl は KUBECONFIG 未設定だと /etc/rancher/k3s/k3s.yaml を優先するので明示する。
+kubectl_node() { ssh "${K3S_USER}@${K3S_NODE}" "KUBECONFIG=\$HOME/.kube/config kubectl $(printf '%q ' "$@")"; }
+
 ensure_postgres() {
     if ! kubectl get pod -n "${PG_NAMESPACE}" -l app=postgres -o jsonpath='{.items[0].status.phase}' 2>/dev/null | grep -q Running; then
         die "PostgreSQL が起動していません。先に '$0 setup-pg' を実行してください"
@@ -64,7 +68,7 @@ cmd_setup_pg() {
     ssh_node "sudo mkdir -p /home/micheam/postgres-data && sudo chown -R 999:999 /home/micheam/postgres-data"
 
     info "PostgreSQL マニフェストを適用"
-    kubectl apply -k "${POSTGRES_DIR}"
+    kubectl kustomize "${POSTGRES_DIR}" | kubectl_node apply -f -
 
     info "PostgreSQL の起動を待機中..."
     kubectl wait --for=condition=ready pod -l app=postgres -n "${PG_NAMESPACE}" --timeout=120s
@@ -87,16 +91,16 @@ cmd_setup_db() {
     pg_pod=$(kubectl get pod -n "${PG_NAMESPACE}" -l app=postgres -o jsonpath='{.items[0].metadata.name}')
 
     info "limno ユーザーを作成 (既に存在する場合はパスワードを更新)"
-    kubectl exec -n "${PG_NAMESPACE}" "${pg_pod}" -- \
+    kubectl_node exec -n "${PG_NAMESPACE}" "${pg_pod}" -- \
         psql -U postgres -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'limno') THEN CREATE USER limno WITH PASSWORD '${db_pass}'; ELSE ALTER USER limno WITH PASSWORD '${db_pass}'; END IF; END \$\$;"
 
     info "limno データベースを作成 (既に存在する場合はスキップ)"
-    kubectl exec -n "${PG_NAMESPACE}" "${pg_pod}" -- \
+    kubectl_node exec -n "${PG_NAMESPACE}" "${pg_pod}" -- \
         psql -U postgres -c "SELECT 'CREATE DATABASE limno OWNER limno' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'limno')" --tuples-only | \
-        kubectl exec -i -n "${PG_NAMESPACE}" "${pg_pod}" -- psql -U postgres
+        kubectl_node exec -i -n "${PG_NAMESPACE}" "${pg_pod}" -- psql -U postgres
 
     info "limno スキーマを作成"
-    kubectl exec -n "${PG_NAMESPACE}" "${pg_pod}" -- \
+    kubectl_node exec -n "${PG_NAMESPACE}" "${pg_pod}" -- \
         psql -U postgres -d limno -c "CREATE SCHEMA IF NOT EXISTS limno AUTHORIZATION limno;"
 
     info "DB セットアップ完了!"
@@ -140,7 +144,7 @@ cmd_setup() {
 
     # 5. limnosrv マニフェスト適用
     info "limnosrv マニフェストを適用"
-    kubectl apply -k "${APP_DIR}"
+    kubectl kustomize "${APP_DIR}" | kubectl_node apply -f -
 
     # 6. Pod の起動待ち
     info "limnosrv の起動を待機中..."
@@ -165,11 +169,11 @@ cmd_deploy() {
     cmd_import
 
     # 3. マニフェスト適用 (ConfigMap 変更があれば反映)
-    kubectl apply -k "${APP_DIR}"
+    kubectl kustomize "${APP_DIR}" | kubectl_node apply -f -
 
     # 4. rollout restart
     info "Deployment をロールアウト再起動"
-    kubectl rollout restart deployment/limnosrv -n "${NAMESPACE}"
+    kubectl_node rollout restart deployment/limnosrv -n "${NAMESPACE}"
 
     info "ロールアウト完了を待機中..."
     kubectl rollout status deployment/limnosrv -n "${NAMESPACE}" --timeout=120s
@@ -208,7 +212,7 @@ cmd_migrate() {
     pod=$(kubectl get pod -n "${NAMESPACE}" -l app=limnosrv -o jsonpath='{.items[0].metadata.name}' 2>/dev/null) \
         || die "limnosrv Pod が見つかりません"
 
-    kubectl exec -n "${NAMESPACE}" "${pod}" -- sh -c \
+    kubectl_node exec -n "${NAMESPACE}" "${pod}" -- sh -c \
         'psql "$DATABASE_URL" -c "CREATE SCHEMA IF NOT EXISTS limno;" && goose -dir /migrations -table limno.goose_db_version postgres "$DATABASE_URL" up'
 }
 

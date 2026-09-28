@@ -13,6 +13,6 @@ cd homelab-k3s
 # Requires: sops, age key at ~/.config/sops/age/keys.txt
 ./scripts/setup/init-local.sh
 
-# Deploy an application
-kubectl apply -k apps/postgres/
+# Deploy an application (local kubeconfig is read-only; apply on the k3s node)
+kubectl kustomize apps/postgres/ | ssh <k3s-node> 'KUBECONFIG=$HOME/.kube/config kubectl apply -f -'
 ```
