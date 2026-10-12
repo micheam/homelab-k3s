@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats
+  labels:
+    app: nats
+spec:
+  serviceName: nats
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      containers:
+      - name: nats
+        image: nats:2.15.0-alpine
+        args:
+        - --config
+        - /etc/nats-config/nats.conf
+        env:
+        - name: GOMEMLIMIT
+          value: "200MiB"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 4222
+          name: client
+        - containerPort: 8222
+          name: monitor
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nats-config
+        - name: data
+          mountPath: /data
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: monitor
+          periodSeconds: 10
+          failureThreshold: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz?js-server-only=true
+            port: monitor
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz?js-enabled-only=true
+            port: monitor
+          periodSeconds: 30
+      volumes:
+      - name: config
+        configMap:
+          name: nats-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: nats-data-pvc

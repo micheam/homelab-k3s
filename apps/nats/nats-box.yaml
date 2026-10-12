@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats-box
+  labels:
+    app: nats-box
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats-box
+  template:
+    metadata:
+      labels:
+        app: nats-box
+    spec:
+      containers:
+      - name: nats-box
+        image: natsio/nats-box:0.20.0
+        command:
+        - sh
+        - -ec
+        - trap true INT TERM; sleep infinity & wait
+        env:
+        - name: NATS_URL
+          value: nats://nats.nats.svc.cluster.local:4222
+        - name: NATS_NKEY
+          value: /etc/nats-ops/ops.nk
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: ops-nkey
+          mountPath: /etc/nats-ops
+          readOnly: true
+      volumes:
+      - name: ops-nkey
+        secret:
+          secretName: nats-secrets
+          defaultMode: 0400
+          items:
+          - key: OPS_NKEY_SEED
+            path: ops.nk
