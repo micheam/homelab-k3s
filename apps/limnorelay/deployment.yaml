@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: limnorelay
+  labels:
+    app: limnorelay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: limnorelay
+  template:
+    metadata:
+      labels:
+        app: limnorelay
+    spec:
+      containers:
+      - name: limnorelay
+        image: limnorelay:latest
+        imagePullPolicy: Never
+        envFrom:
+        - configMapRef:
+            name: limnorelay-config
+        env:
+        - name: LIMNO_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: limnorelay-secrets
+              key: LIMNO_API_KEY
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "10m"
+          limits:
+            memory: "64Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: nkey
+          mountPath: /etc/limnorelay
+          readOnly: true
+      volumes:
+      - name: nkey
+        secret:
+          secretName: limnorelay-secrets
+          defaultMode: 0400
+          items:
+          - key: NATS_NKEY_SEED
+            path: nats.nk
