@@ -79,13 +79,15 @@ cmd_setup_pg() {
 cmd_setup_db() {
     info "limno データベースユーザーとスキーマを作成"
     ensure_postgres
-    ensure_config "${APP_DIR}" "limnosrv"
 
-    # limnosrv の config.env から DATABASE_URL を読み取り、パスワードを抽出
+    # limnosrv の secrets.env（secrets.enc.env を復号したもの）から DATABASE_URL を読み取り、パスワードを抽出
+    local secrets="${APP_DIR}/secrets.env"
+    [ -f "${secrets}" ] || die "${secrets} がありません。先に scripts/setup/init-local.sh で復号してください"
+
     local db_url db_pass
-    db_url=$(grep '^DATABASE_URL=' "${APP_DIR}/config.env" | cut -d= -f2-)
+    db_url=$(grep '^DATABASE_URL=' "${secrets}" | cut -d= -f2- || true)
     db_pass=$(echo "${db_url}" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
-    [ -n "${db_pass}" ] || die "DATABASE_URL からパスワードを抽出できません。limnosrv の config.env を確認してください"
+    [ -n "${db_pass}" ] || die "DATABASE_URL からパスワードを抽出できません。${secrets} を確認してください"
 
     local pg_pod
     pg_pod=$(kubectl get pod -n "${PG_NAMESPACE}" -l app=postgres -o jsonpath='{.items[0].metadata.name}')
