@@ -79,6 +79,11 @@ if [ ! -f apps/nats/pv-local.yaml ]; then
     echo "✏️  Please edit apps/nats/pv-local.yaml"
 fi
 
+if [ ! -f apps/registry/pv-local.yaml ]; then
+    cp apps/registry/pv.yaml.example apps/registry/pv-local.yaml
+    echo "✏️  Please edit apps/registry/pv-local.yaml"
+fi
+
 echo ""
 echo "📝 Next steps:"
 echo "1. Edit pv-local.yaml files (update paths and node names)"
