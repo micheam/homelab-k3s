@@ -14,42 +14,9 @@ spec:
       labels:
         app: limnosrv
     spec:
-      initContainers:
-      - name: wait-for-postgres
-        image: limnosrv:latest
-        imagePullPolicy: Never
-        command:
-        - sh
-        - -c
-        - |
-          until pg_isready -h postgres.postgres.svc.cluster.local -U limno; do
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-        envFrom:
-        - configMapRef:
-            name: limnosrv-config
-        - secretRef:
-            name: limnosrv-secrets
-      - name: migrate
-        image: limnosrv:latest
-        imagePullPolicy: Never
-        command:
-        - sh
-        - -c
-        - |
-          psql "$DATABASE_URL" -c 'CREATE SCHEMA IF NOT EXISTS limno;' &&
-          goose -dir /migrations -table limno.goose_db_version postgres "$DATABASE_URL" up
-        envFrom:
-        - configMapRef:
-            name: limnosrv-config
-        - secretRef:
-            name: limnosrv-secrets
       containers:
       - name: limnosrv
-        image: limnosrv:latest
-        command: ["limnosrv"]
-        imagePullPolicy: Never
+        image: limnosrv
         resources:
           requests:
             memory: "64Mi"
@@ -65,13 +32,18 @@ spec:
             name: limnosrv-config
         - secretRef:
             name: limnosrv-secrets
+        # limnosrv は DB を最大 60 秒待ち、マイグレーションを当ててから listen する。
+        # その間に liveness で再起動されないよう、起動の完了を最大 2 分待つ
+        startupProbe:
+          tcpSocket:
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 24
         livenessProbe:
           tcpSocket:
             port: 8080
-          initialDelaySeconds: 5
           periodSeconds: 10
         readinessProbe:
           tcpSocket:
             port: 8080
-          initialDelaySeconds: 3
           periodSeconds: 5

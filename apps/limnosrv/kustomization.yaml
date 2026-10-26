@@ -20,4 +20,5 @@ secretGenerator:
 
 images:
   - name: limnosrv
-    newTag: latest
+    newName: registry.home.lan:30500/limnosrv
+    newTag: 712b816

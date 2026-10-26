@@ -18,4 +18,5 @@ secretGenerator:
 
 images:
   - name: limnorelay
-    newTag: latest
+    newName: registry.home.lan:30500/limnorelay
+    newTag: 712b816

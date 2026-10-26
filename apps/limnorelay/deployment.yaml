@@ -16,8 +16,7 @@ spec:
     spec:
       containers:
       - name: limnorelay
-        image: limnorelay:latest
-        imagePullPolicy: Never
+        image: limnorelay
         envFrom:
         - configMapRef:
             name: limnorelay-config
