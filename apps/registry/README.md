@@ -50,6 +50,7 @@ sudo systemctl restart k3s
 
 - `/etc/hosts` に `192.168.1.23 registry.home.lan` を足す
 - HTTP で push するので、Docker Desktop の Settings → Docker Engine で `insecure-registries` に `"registry.home.lan:30500"` を足して Apply & restart する
+- macOS のシステム設定 → プライバシーとセキュリティ → ローカルネットワークで、Docker を許可する。許可が無いと、LAN 上の機器への接続だけが `dial tcp 192.168.1.23:30500: connect: no route to host` で失敗する。ルータやインターネットには届くので、ネットワークの問題と見分けにくい。Docker Desktop を更新した後などに同じ症状が出たら、まずこの許可を確かめる
 
 ## 確認
 
