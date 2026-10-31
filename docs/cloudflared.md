@@ -121,16 +121,35 @@ cloudflared のマニフェストは変えない。
 
 イメージのタグは、`apps/cloudflared/kustomization.yaml` の `newTag` だけで指定している（`deployment.yaml` にはタグを書かない）。
 
-1. [リリース](https://github.com/cloudflare/cloudflared/releases)を確かめ、`newTag` を書き換える
+1. [リリース](https://github.com/cloudflare/cloudflared/releases) を確かめ、対象のバージョンを選択する。
 2. ノードは arm64 なので、そのタグに linux/arm64 のイメージがあることを確かめる
-3. 初期構築の手順 3 と同じく適用する
+    ```bash
+    docker buildx imagetools inspect "cloudflare/cloudflared:${CLOUDFLARED_TAG:?}" |\
+    grep 'Platform:.*linux/arm64'
+    ```
+    `Platform: linux/arm64` の行が出ればよい。何も出なければ、そのタグは使わない
+3. _apps/cloudflared/kustomization.yaml_ の `newTag` を書き換える
+    ```diff
+     # 例: 2026.10.7 への更新
+     images:
+       - name: cloudflare/cloudflared
+    -    newTag: 2026.10.4
+    +    newTag: 2026.10.7
+    ```
+4. 適用する
+    ```bash
+    kubectl kustomize apps/cloudflared/ | ssh "${K3S_NODE:?}" 'KUBECONFIG=$HOME/.kube/config kubectl apply -f -'
+    kubectl -n cloudflared rollout status deployment/cloudflared
+    ```
+5. 新しい Pod が Cloudflare に接続できていることを確かめる
+    ```bash
+    kubectl -n cloudflared logs -l app=cloudflared --prefix --tail=-1 |\
+    grep -E 'Version|Registered tunnel connection|ERR'
+    ```
+    `Registered tunnel connection` が並び、`rollout status` が成功していればよい
 
-```bash
-docker manifest inspect cloudflare/cloudflared:<tag> | jq -r '.manifests[].platform | "\(.os)/\(.architecture)"'
-```
-
-ロールアウトでは新しい Pod が先に起動し、Cloudflare につながってから古い Pod が止まる。
-そのため、更新の間もどちらかの Pod がつながっている。
+ロールアウトでは新しい Pod が先に起動し、Cloudflare につながってから古い Pod が止まる動きをする。
+そのため、更新のタイミングについてはそれほど気にする必要はない。
 
 ## トークンを更新する
 
